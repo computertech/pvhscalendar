@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Calendar</title>
+<style>
+div{
+        width:100%;
+        text-align:center;
+}
+</style>
+</head>
+ 
+<body>
+    <div id='content'>
+      <h1>Events</h1>
+    </div>
+    <a href='#' id='authorize-button' onclick='handleAuthClick();'>Login</a>
+   
+    <script>
+var firedOnce = false; //used to prevent the function from firing twice.
+var today = new Date();
+var year = today.getFullYear();
+var month = today.getMonth()+1;
+var day = today.getDate();
+       
+var clientId = '179597458898-n7kdpifujk0od1qs0jt7ea78tjqmjh48.apps.googleusercontent.com';
+var apiKey = 'AIzaSyB3Z0F0AEV3qE7gdzJ2iO_clEaulYSunbs';
+var scopes = 'https://www.googleapis.com/auth/calendar';
+ 
+function handleClientLoad() {
+  gapi.client.setApiKey(apiKey);
+  window.setTimeout(checkAuth,1);
+  checkAuth();
+}
+ 
+function checkAuth() {
+  gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: true},
+      handleAuthResult);
+}
+ 
+function handleAuthResult(authResult) {
+  var authorizeButton = document.getElementById('authorize-button');
+  if (authResult) {
+    authorizeButton.style.visibility = 'hidden';
+    makeApiCall();
+  } else {
+    authorizeButton.style.visibility = '';
+    authorizeButton.onclick = handleAuthClick;
+   }
+}
+ 
+function handleAuthClick(event) {
+  gapi.auth.authorize(
+      {client_id: clientId, scope: scopes, immediate: false},
+      handleAuthResult);
+  return false;
+}
+ 
+//document.createTextNode(resp.items[i].summary)
+ 
+function makeApiCall() {
+ 
+        if (firedOnce == false) {
+          gapi.client.load('calendar', 'v3', function() {
+         
+          //for (var i=0; i < 7; i++) {
+          //increment for days & months goes here
+          //day++;
+         
+                var request = gapi.client.calendar.events.list({
+                  'calendarId': 'pvhs.k12.nj.us_r6jaor04o80hpsaldf17civeio@group.calendar.google.com',
+                  'timeMin': 'year-month-dayT00:00:00-06:00'.replace('year', year).replace('month', month).replace('day', day),
+                  //'timeMax': 'year-month-dayT23:59:59-06:00'.replace('year', year).replace('month', month).replace('day', day)
+                });
+ 
+                request.execute(function(resp) {
+               
+                        if (resp.items != null) {
+                       
+                          for (var i = 0; i < resp.items.length; i++) {
+                               
+                                //---------nodes for html elements
+                                var title = document.createTextNode(resp.items[i].summary); //titles are undefined so I'm using the summary as title instead
+                                //var description = document.createTextNode(resp.items[i].description); //there are no descriptions apparently
+                                var date = document.createTextNode('Start: ' + resp.items[i].start.date + ' End: ' + resp.items[i].end.date); //resp.items[i].date returns undefined
+                               
+                                if (date.textContent == 'Start: undefined End: undefined' || resp.items[i].start.date == (year + '-' + month + '-' + day)) {
+                                        //---------html elements
+                                        var div = document.createElement('div');
+                                        div.className = resp.items[i].summary;
+                                       
+                                        var h1 = document.createElement('h1');
+                                        h1.appendChild(title);
+                                        div.appendChild(h1);
+                                       
+                                        if (date.textContent != 'Start: undefined End: undefined') {
+                                          var p = document.createElement('p');
+                                          p.appendChild(date);
+                                          div.appendChild(p);
+                                        } else {
+                                          date = document.createTextNode('Start: ' + year + '-' + month + '-' + day + ' End: ' + year + '-' + month + '-' + day);
+                                          var p = document.createElement('p');
+                                          p.appendChild(date);
+                                          div.appendChild(p);
+                                        }
+                                       
+                                        document.body.appendChild(div);
+                                }
+                               
+                          }
+                         
+                        } else {
+                                var h1 = document.createElement('h1');
+                                h1.appendChild(document.createTextNode('nothing'));
+                                date = document.createTextNode('Start: ' + year + '-' + month + '-' + day + ' End: ' + year + '-' + month + '-' + day);
+                                var p = document.createElement('p');
+                                p.appendChild(date);
+                                var div = document.createElement('div');
+                                div.appendChild(h1);
+                                div.appendChild(p);
+                                document.body.appendChild(div);
+                        }
+                }); //--end resp
+                //}
+          }); //--end request
+        }
+       
+ if (firedOnce == true) {
+        firedOnce = false;
+ } else if(firedOnce == false) {
+        firedOnce = true;
+ }
+ 
+} //--end makeApiCall()
+   </script>
+    <script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
+</body>
+</html>
